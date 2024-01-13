@@ -18,6 +18,7 @@ package com.buzbuz.smartautoclicker.feature.floatingmenu.ui
 
 import android.app.Application
 import android.content.Context
+import android.util.Log
 import android.view.View
 
 import androidx.lifecycle.AndroidViewModel
@@ -128,6 +129,16 @@ class MainMenuModel(application: Application) : AndroidViewModel(application) {
         return true
     }
 
+
+    fun startDetectionIfIdle(context: Context, onStoppedByLimitation: () -> Unit) {
+        when (detectionState.value) {
+            UiState.Detecting -> {
+                Log.i(TAG, "detecting is already running.");
+            }
+            UiState.Idle -> startDetection(context, onStoppedByLimitation)
+        }
+    }
+
     private fun startDetection(context: Context, onStoppedByLimitation: () -> Unit) {
         viewModelScope.launch {
             detectionRepository.startDetection(context, debugRepository.detectionProgressListener)
@@ -206,9 +217,14 @@ class MainMenuModel(application: Application) : AndroidViewModel(application) {
         super.onCleared()
         repository.cleanCache()
     }
+
 }
 
 sealed class UiState {
     data object Detecting: UiState()
     data object Idle: UiState()
 }
+
+
+/** Tag for logs. */
+private const val TAG = "MainMenuModel"

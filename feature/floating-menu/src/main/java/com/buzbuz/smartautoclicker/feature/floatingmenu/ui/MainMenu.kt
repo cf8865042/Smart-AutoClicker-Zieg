@@ -16,15 +16,20 @@
  */
 package com.buzbuz.smartautoclicker.feature.floatingmenu.ui
 
+import android.content.BroadcastReceiver
 import android.content.ComponentName
+import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
+import android.content.IntentFilter
+import android.os.Build
 import android.util.Size
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.view.View
 import android.view.WindowManager
+import androidx.annotation.RequiresApi
 
 import androidx.appcompat.view.ContextThemeWrapper
 import androidx.lifecycle.Lifecycle
@@ -80,6 +85,17 @@ class MainMenu(private val onStopClicked: () -> Unit) : OverlayMenu() {
      */
     private var keyDownHandled: Boolean = false
 
+    private val menuControlReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            if (intent.action?.equals("com.buzbuz.smartautoclicker.ctrl.play") == true) {
+                viewModel.startDetectionIfIdle(context){
+                    billingFlowTriggeredByDetectionLimitation = true
+                    hide()
+                }
+            }
+        }
+    }
+
     override fun animateOverlayView(): Boolean = false
 
     override fun onCreateMenu(layoutInflater: LayoutInflater): ViewGroup {
@@ -107,6 +123,7 @@ class MainMenu(private val onStopClicked: () -> Unit) : OverlayMenu() {
                     WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
         }
 
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun onCreate() {
         super.onCreate()
 
@@ -136,6 +153,9 @@ class MainMenu(private val onStopClicked: () -> Unit) : OverlayMenu() {
                 launch { debuggingViewModel.isDebugging.collect(::updateDebugOverlayViewVisibility) }
             }
         }
+
+        context.registerReceiver(menuControlReceiver, IntentFilter("com.buzbuz.smartautoclicker.ctrl.play"),
+            Context.RECEIVER_EXPORTED);
     }
 
     override fun onStart() {
@@ -157,6 +177,7 @@ class MainMenu(private val onStopClicked: () -> Unit) : OverlayMenu() {
     override fun onDestroy() {
         super.onDestroy()
         playPauseButtonController.detachView()
+        context.unregisterReceiver(menuControlReceiver);
     }
 
     override fun onKeyEvent(keyEvent: KeyEvent): Boolean {
@@ -368,4 +389,8 @@ class MainMenu(private val onStopClicked: () -> Unit) : OverlayMenu() {
             .apply { window?.setType(DisplayMetrics.TYPE_COMPAT_OVERLAY) }
             .show()
     }
+
 }
+
+/** Tag for logs. */
+private const val TAG = "MainMenu"
