@@ -86,7 +86,7 @@ class MainMenu(private val onStopClicked: () -> Unit) : OverlayMenu() {
     private var keyDownHandled: Boolean = false
 
     private val menuControlReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context, intent: Intent) {
+        override fun onReceive(context2: Context, intent: Intent) {
             if (intent.action?.equals("com.buzbuz.smartautoclicker.ctrl.play") == true) {
                 viewModel.startDetectionIfIdle(context){
                     billingFlowTriggeredByDetectionLimitation = true
